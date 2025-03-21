@@ -1,0 +1,10 @@
+# Ignorar entornos virtuales
+koenv/
+
+# Ignorar archivos de Python compilados
+__pycache__/
+*.pyc
+
+# Ignorar dependencias (solo subir requirements.txt)
+*.log
+.env
