@@ -6,11 +6,11 @@ import os
 from dotenv import load_dotenv
 
 # Cargar variables de entorno
-load_dotenv()  # Esto carga las variables desde un archivo .env en desarrollo local
+load_dotenv()
 
 app = Flask(__name__)
 
-# Configuración de MongoDB usando variables de entorno
+# Configuración de MongoDB
 MONGO_URI = os.environ.get("MONGO_URI")
 
 # Intentar conectar a MongoDB y verificar la conexión
@@ -21,6 +21,10 @@ try:
     print("Conexión exitosa a MongoDB")
 except Exception as e:
     print(f"Error de conexión a MongoDB: {e}")
+    
+#SE define la base de datos y GridFS
+db = client[os.environ.get("MONGO_DB_NAME", "kobobd")]
+fs = gridfs.GridFS(db)
 
 # Endpoint para recibir los datos de las encuestas de KoboToolbox
 @app.route('/recibir-datos-kobo', methods=['POST'])
@@ -32,7 +36,7 @@ def recibir_datos():
     datos_completos = request.get_json()
     print(datos_completos)  # Debugging
    
-    # Filtrar solo los campos necesarios
+    # Filtrar campos necesarios
     datos_filtrados = {
         'Nombre': datos_completos.get('Nombre', ''),
         'Apellido': datos_completos.get('Apellido', ''),
