@@ -2,14 +2,25 @@ from flask import Flask, request, jsonify
 from pymongo import MongoClient
 import gridfs
 import requests
+import os
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()  # Esto carga las variables desde un archivo .env en desarrollo local
 
 app = Flask(__name__)
 
-# Configuración de MongoDB
-MONGO_URI = "mongodb+srv://lxidxr:kobobd@clusterdemo.tuq1n.mongodb.net/?retryWrites=true&w=majority&appName=ClusterDemo"
-client = MongoClient(MONGO_URI)
-db = client["kobobd"]
-fs = gridfs.GridFS(db)
+# Configuración de MongoDB usando variables de entorno
+MONGO_URI = os.environ.get("MONGO_URI")
+
+# Intentar conectar a MongoDB y verificar la conexión
+try:
+    client = MongoClient(MONGO_URI)
+    # Verificar conexión inmediatamente
+    client.admin.command('ping')
+    print("Conexión exitosa a MongoDB")
+except Exception as e:
+    print(f"Error de conexión a MongoDB: {e}")
 
 # Endpoint para recibir los datos de las encuestas de KoboToolbox
 @app.route('/recibir-datos-kobo', methods=['POST'])
