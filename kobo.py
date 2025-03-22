@@ -47,7 +47,7 @@ def recibir_datos():
     }
    
     # 🔸 Guardar datos filtrados de la encuesta en MongoDB
-    encuesta_id = db.encuestas.insert_one(datos_filtrados).inserted_id
+    encuesta_id = db.Persona.insert_one(datos_filtrados).inserted_id
    
     # 🔸 Descargar y almacenar imagen si existe
     if "_attachments" in datos_completos and len(datos_completos["_attachments"]) > 0:
@@ -60,7 +60,7 @@ def recibir_datos():
             # Guardar imagen en GridFS
             file_id = fs.put(response.content, filename=filename, contentType=attachment["mimetype"])
             # Actualizar la encuesta con la referencia de la imagen
-            db.encuestas.update_one({"_id": encuesta_id}, {"$set": {"imagen_id": str(file_id)}})
+            db.Persona.update_one({"_id": encuesta_id}, {"$set": {"imagen_id": str(file_id)}})
             return jsonify({
                 "message": "Datos filtrados y imagen almacenados correctamente",
                 "encuesta_id": str(encuesta_id),
