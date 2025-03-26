@@ -5,6 +5,7 @@ import gridfs
 import requests
 import os
 from dotenv import load_dotenv
+from bson import ObjectId
 
 # Cargar variables de entorno
 load_dotenv()
@@ -75,11 +76,16 @@ def recibir_datos():
 @app.route('/ver-imagen/<imagen_id>', methods=['GET'])
 def ver_imagen(imagen_id):
     try:
+        # Convertir el imagen_id a ObjectId si es necesario
+        imagen_id = ObjectId(imagen_id)
+        
         # Obtener la imagen desde GridFS
         file = fs.get(imagen_id)
         return send_file(io.BytesIO(file.read()), mimetype=file.content_type)
     except gridfs.errors.NoFile:
         return jsonify({"error": "Imagen no encontrada"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Ruta de prueba para ver que el servidor esté corriendo
 @app.route('/')
