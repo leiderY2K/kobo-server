@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
+import io
 from pymongo import MongoClient
 import gridfs
 import requests
@@ -49,7 +50,7 @@ def recibir_datos():
     # 🔸 Guardar datos filtrados de la encuesta en MongoDB
     encuesta_id = db.Persona.insert_one(datos_filtrados).inserted_id
    
-    # 🔸 Descargar y almacenar imagen si existe
+    # 🔸 Descargar y almacenar imagen
     if "_attachments" in datos_completos and len(datos_completos["_attachments"]) > 0:
         attachment = datos_completos["_attachments"][0]
         image_url = attachment["download_url"]
@@ -69,6 +70,15 @@ def recibir_datos():
         except requests.exceptions.RequestException as e:
             return jsonify({"error": "Error al descargar la imagen", "detalle": str(e)}), 500
     return jsonify({"message": "Datos filtrados almacenados sin imagen", "encuesta_id": str(encuesta_id)}), 200
+
+@app.route('/ver-imagen/<imagen_id>', methods=['GET'])
+def ver_imagen(imagen_id):
+    try:
+        # Obtener la imagen desde GridFS
+        file = fs.get(imagen_id)
+        return send_file(io.BytesIO(file.read()), mimetype=file.content_type)
+    except gridfs.errors.NoFile:
+        return jsonify({"error": "Imagen no encontrada"}), 404
 
 # Ruta de prueba para ver que el servidor esté corriendo
 @app.route('/')
