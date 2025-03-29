@@ -87,6 +87,29 @@ def ver_imagen(imagen_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/enviar-datos-kobo', methods=['GET'])
+def enviar_datos_kobo():
+    try:
+        # Encuestas de la colección Persona
+        encuestas = db.Persona.find({}, {"Nombre": 1, "Apellido": 1, "submitted_by": 1, "imagen_id": 1})
+        
+        # Convertir los documentos a una lista serializable, para poder ser enviados como JSON
+        lista_encuestas = []
+        for encuesta in encuestas:
+            lista_encuestas.append({
+                "_id": str(encuesta["_id"]),
+                "Nombre": encuesta.get("Nombre", ""),
+                "Apellido": encuesta.get("Apellido", ""),
+                "submitted_by": encuesta.get("submitted_by", ""),
+                "imagen_id": str(encuesta["imagen_id"]) if "imagen_id" in encuesta else None
+            })
+
+        return jsonify(lista_encuestas), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error al obtener los datos: {str(e)}"}), 500
+
+
 # Ruta de prueba para ver que el servidor esté corriendo
 @app.route('/')
 def index():
