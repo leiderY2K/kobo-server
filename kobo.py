@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, send_file
 import io
 from pymongo import MongoClient
+from flask_cors import CORS, cross_origin
 import gridfs
 import requests
 import os
@@ -11,6 +12,7 @@ from bson import ObjectId
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app, resources={r"/enviar-datos-kobo": {"origins": "*"}})    # Permitir solicitudes CORS desde cualquier origen
 
 # Configuración de MongoDB
 MONGO_URI = os.environ.get("MONGO_URI")
@@ -88,6 +90,7 @@ def ver_imagen(imagen_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/enviar-datos-kobo', methods=['GET'])
+@cross_origin()
 def enviar_datos_kobo():
     try:
         # Encuestas de la colección Persona
