@@ -93,9 +93,13 @@ def ver_imagen(imagen_id):
         
         # Obtener la imagen desde GridFS
         imagen_doc = fotocedula.find_one({"_id": imagen_id})
-        return send_file(io.BytesIO(imagen_doc.read()), mimetype=imagen_doc.content_type)
-    except fotocedula.errors.NoFile:
-        return jsonify({"error": "Imagen no encontrada"}), 404
+        if not imagen_doc:
+            return jsonify({"error": "Imagen no encontrada"}), 404
+        return send_file(
+            io.BytesIO(imagen_doc["data"]),
+            mimetype=imagen_doc.get("contentType", "image/jpeg"),
+            download_name=imagen_doc.get("filename", "imagen.jpg")
+        )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
