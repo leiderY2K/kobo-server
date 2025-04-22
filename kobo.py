@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify, send_file
 import io
 from pymongo import MongoClient
 from flask_cors import CORS
-import gridfs
+#import gridfs
+from bson.binary import Binary
 import requests
 import os
 from dotenv import load_dotenv
@@ -26,9 +27,10 @@ try:
 except Exception as e:
     print(f"Error de conexión a MongoDB: {e}")
     
-#SE define la base de datos y GridFS
+#Base de datos y colección
 db = client[os.environ.get("MONGO_DB_NAME", "kobobd")]
-fs = gridfs.GridFS(db)
+#fs = gridfs.GridFS(db)
+fotocedula = db["imagenes"]
 
 # Endpoint para recibir los datos de las encuestas de KoboToolbox
 @app.route('/recibir-datos-kobo', methods=['POST'])
@@ -62,14 +64,22 @@ def recibir_datos():
         try:
             response = requests.get(image_url)
             response.raise_for_status()  # Verificar si la descarga fue exitosa
-            # Guardar imagen en GridFS
-            file_id = fs.put(response.content, filename=filename, contentType=attachment["mimetype"])
+            # Guardar como Binary en MongoDB
+            imagen_doc = {
+                "filename": filename,
+                "contentType": attachment["mimetype"],
+                "data": Binary(response.content),
+                "persona_id": encuesta_id
+            }
+            
+            imagen_id = fotocedula.insert_one(imagen_doc).inserted_id
+            
             # Actualizar la encuesta con la referencia de la imagen
-            db.Persona.update_one({"_id": encuesta_id}, {"$set": {"imagen_id": file_id}})
+            db.Persona.update_one({"_id": encuesta_id}, {"$set": {"imagen_id": imagen_id}})
             return jsonify({
                 "message": "Datos filtrados y imagen almacenados correctamente",
                 "encuesta_id": str(encuesta_id),
-                "imagen_id": str(file_id)
+                "imagen_id": str(imagen_id)
             }), 200
         except requests.exceptions.RequestException as e:
             return jsonify({"error": "Error al descargar la imagen", "detalle": str(e)}), 500
@@ -82,9 +92,9 @@ def ver_imagen(imagen_id):
         imagen_id = ObjectId(imagen_id)
         
         # Obtener la imagen desde GridFS
-        file = fs.get(imagen_id)
+        file = fotocedula.get(imagen_id)
         return send_file(io.BytesIO(file.read()), mimetype=file.content_type)
-    except gridfs.errors.NoFile:
+    except fotocedula.errors.NoFile:
         return jsonify({"error": "Imagen no encontrada"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
